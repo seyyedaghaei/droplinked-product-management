@@ -3,12 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProductsModule } from './modules/products/products.module';
-import { CollectionsModule } from './modules/collections/collections.module';
-import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { SeedService } from './modules/users/services/seed.service';
-import { User, UserSchema } from './modules/users/schemas/user.schema';
+import { ProductsModule } from './modules/products';
+import { CollectionsModule } from './modules/collections';
+import { UsersModule, SeedService, User, UserSchema } from './modules/users';
+import { AuthModule } from './modules/auth';
 
 @Module({
   imports: [

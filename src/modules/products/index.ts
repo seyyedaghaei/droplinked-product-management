@@ -1,0 +1,11 @@
+export * from './products.module';
+export * from './products.service';
+export * from './products.controller';
+export * from './schemas/product.schema';
+export * from './schemas/sku.schema';
+export * from './dto/create-product.dto';
+export * from './dto/update-product.dto';
+export * from './dto/update-sku.dto';
+export * from './enums/product.enum';
+export { BaseProduct, PhysicalProduct, DigitalProduct, DraftProduct, PublishedProduct, ProductForValidation, isPhysicalProduct, isDigitalProduct, isDraftProduct, isPublishedProduct } from './types/product.types';
+export { BaseSKU, PhysicalSKU, DigitalSKU, SKU, isPhysicalSKU, isDigitalSKU } from './types/sku.types';
