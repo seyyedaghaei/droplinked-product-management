@@ -12,7 +12,12 @@ This document outlines the architecture for the Product Management Backend syste
 
 ### Product Status
 - **Draft**: Minimal validation (title, type, status only)
-- **Published**: Full validation with all required fields
+- **Published**: Full validation with all required fields and collection reference
+
+### Collections System
+- **Collections**: Group products with metadata, SEO, and display settings
+- **Collection Integration**: Published products must reference a valid collection
+- **Collection Features**: Metadata, SEO optimization, display settings, filtering
 
 ### Variant System
 - Products can have multiple variant definitions (e.g., color, size)
@@ -20,6 +25,40 @@ This document outlines the architecture for the Product Management Backend syste
 - Full matrix logic ensures no missing combinations
 
 ## Database Schema Design
+
+### Collection Schema
+```typescript
+interface Collection {
+  _id: ObjectId;
+  name: string;
+  description?: string;
+  slug: string; // auto-generated from name
+  isActive: boolean;
+  products: ObjectId[]; // references to Product documents
+  productCount: number; // calculated field
+  metadata?: {
+    category?: string;
+    brand?: string;
+    season?: string;
+    year?: number;
+    tags?: string[];
+    [key: string]: any;
+  };
+  seo?: {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+  };
+  displaySettings?: {
+    featured?: boolean;
+    showInNavigation?: boolean;
+    sortOrder?: 'name' | 'createdAt' | 'updatedAt' | 'productCount';
+    sortDirection?: 'asc' | 'desc';
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
 
 ### Product Schema
 ```typescript
@@ -29,8 +68,7 @@ interface Product {
   description?: string;
   type: 'physical' | 'digital';
   status: 'draft' | 'published';
-  collection?: string;
-  collectionId?: ObjectId;
+  collectionId?: ObjectId; // reference to Collection
   shippingModel?: ShippingModel; // for physical products
   fileUrl?: string; // for digital products
   variants: VariantDefinition[];
@@ -71,9 +109,10 @@ interface VariantDefinition {
 
 ### Core Services
 1. **ProductsService**: Main business logic for product operations
-2. **SkuService**: SKU generation, validation, and management
-3. **ValidationService**: Business rule validation
-4. **TransactionService**: MongoDB transaction management
+2. **CollectionsService**: Collection management with metadata and SEO
+3. **SkuService**: SKU generation, validation, and management
+4. **ValidationService**: Business rule validation
+5. **TransactionService**: MongoDB transaction management
 
 ### Key Methods
 - `createProduct()`: Create product with SKU generation
@@ -86,11 +125,23 @@ interface VariantDefinition {
 ## API Design
 
 ### Endpoints
+
+**Products:**
 - `POST /products` - Create product
 - `GET /products/:id` - Get product by ID
-- `PUT /products/:id` - Update product
+- `PATCH /products/:id` - Update product
 - `DELETE /products/:id` - Delete product
 - `GET /products` - List products (with filtering)
+
+**Collections:**
+- `POST /collections` - Create collection
+- `GET /collections/:id` - Get collection by ID
+- `GET /collections/slug/:slug` - Get collection by slug
+- `PATCH /collections/:id` - Update collection
+- `DELETE /collections/:id` - Delete collection
+- `GET /collections` - List collections (with filtering)
+- `POST /collections/:id/products/:productId` - Add product to collection
+- `DELETE /collections/:id/products/:productId` - Remove product from collection
 
 ### HTTP Status Codes
 - `200` - Success
@@ -114,10 +165,11 @@ All critical operations are wrapped in MongoDB transactions:
 - Optional: all other fields
 
 ### Published Products
-- Required: title, description, collection/collectionId
+- Required: title, description, collectionId (valid collection reference)
 - Physical: shipping model required
 - Digital: file URL required
 - Must have at least one SKU
+- Collection must exist and be active
 
 ### SKU Validation
 - Number of SKUs must match variant matrix (full matrix logic)
@@ -149,6 +201,21 @@ All critical operations are wrapped in MongoDB transactions:
 - Test validation rules
 - Test error handling
 
+## Database Configuration
+
+### MongoDB Setup
+- **Replica Set**: `rs0` for high availability
+- **Authentication**: Username/password with keyfile security
+- **Mongo Express**: Web UI for database management
+- **Environment Variables**: Configurable credentials and settings
+
+### Testing Status
+- ✅ **Collections Module**: Full CRUD with metadata, SEO, and display settings
+- ✅ **Products Module**: Complete product management with SKU generation
+- ✅ **Integration**: Cross-module relationships and validation
+- ✅ **MongoDB**: Replica set with authentication working
+- ✅ **API Documentation**: Swagger UI with complete endpoint coverage
+
 ## Future Considerations
 
 - Caching strategy for frequently accessed products
@@ -156,3 +223,4 @@ All critical operations are wrapped in MongoDB transactions:
 - Bulk operations for product management
 - Audit logging for product changes
 - Performance optimization for large variant matrices
+- Automated unit and integration testing
