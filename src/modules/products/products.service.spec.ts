@@ -39,6 +39,8 @@ describe('ProductsService', () => {
     updatedAt: new Date(),
   };
 
+  const mockUserId = new Types.ObjectId();
+
   const mockProduct = {
     _id: mockProductId,
     title: 'Test Product',
@@ -46,6 +48,7 @@ describe('ProductsService', () => {
     type: ProductType.PHYSICAL,
     status: ProductStatus.DRAFT,
     collectionId: mockCollectionId,
+    userId: mockUserId,
     variants: [
       { name: 'color', values: ['red', 'blue'] },
       { name: 'size', values: ['S', 'M', 'L'] },
@@ -150,10 +153,10 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         'Published products require title, description, and collection',
       );
     });
@@ -173,10 +176,10 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         'Physical products require shipping model',
       );
     });
@@ -196,10 +199,10 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         'Digital products require file URL',
       );
     });
@@ -226,10 +229,10 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         NotFoundException,
       );
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         'Collection not found',
       );
     });
@@ -257,10 +260,10 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(createProductDto)).rejects.toThrow(
+      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
         'Collection is not active',
       );
     });
@@ -273,20 +276,20 @@ describe('ProductsService', () => {
       };
 
       await expect(
-        service.update('invalid-id', updateProductDto),
+        service.update('invalid-id', updateProductDto, mockUserId),
       ).rejects.toThrow(BadRequestException);
       await expect(
-        service.update('invalid-id', updateProductDto),
+        service.update('invalid-id', updateProductDto, mockUserId),
       ).rejects.toThrow('Invalid product ID');
     });
   });
 
   describe('remove (Cascade Delete)', () => {
     it('should throw BadRequestException for invalid product ID', async () => {
-      await expect(service.remove('invalid-id')).rejects.toThrow(
+      await expect(service.remove('invalid-id', mockUserId)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.remove('invalid-id')).rejects.toThrow(
+      await expect(service.remove('invalid-id', mockUserId)).rejects.toThrow(
         'Invalid product ID',
       );
     });

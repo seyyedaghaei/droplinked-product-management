@@ -24,6 +24,13 @@ This document outlines the architecture for the Product Management Backend syste
 - SKUs are auto-generated for all possible variant combinations
 - Full matrix logic ensures no missing combinations
 
+### User Authentication & Authorization
+- **JWT Authentication**: Secure token-based authentication system
+- **User Registration**: User signup with email and password validation
+- **User Login**: Secure login with password hashing using bcryptjs
+- **Ownership Validation**: Users can only modify their own products
+- **Custom Decorators**: Clean @CurrentUser() decorator for extracting authenticated user data
+
 ## Database Schema Design
 
 ### Collection Schema
@@ -60,6 +67,22 @@ interface Collection {
 }
 ```
 
+### User Schema
+```typescript
+interface User {
+  _id: ObjectId;
+  email: string; // unique
+  password: string; // hashed with bcryptjs
+  firstName: string;
+  lastName: string;
+  isActive: boolean; // default: true
+  products: ObjectId[]; // references to Product documents
+  productCount: number; // calculated field
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ### Product Schema
 ```typescript
 interface Product {
@@ -69,6 +92,7 @@ interface Product {
   type: 'physical' | 'digital';
   status: 'draft' | 'published';
   collectionId?: ObjectId; // reference to Collection
+  userId: ObjectId; // reference to User (required)
   shippingModel?: ShippingModel; // for physical products
   fileUrl?: string; // for digital products
   variants: VariantDefinition[];
@@ -113,6 +137,8 @@ interface VariantDefinition {
 3. **SkuService**: SKU generation, validation, and management
 4. **ValidationService**: Business rule validation
 5. **TransactionService**: MongoDB transaction management
+6. **AuthService**: User authentication and JWT token management
+7. **UsersService**: User management and profile operations
 
 ### Key Methods
 - `createProduct()`: Create product with SKU generation
@@ -121,21 +147,28 @@ interface VariantDefinition {
 - `generateSkus()`: Generate SKU matrix from variant definitions
 - `validateProduct()`: Validate product based on status and type
 - `calculatePurchasable()`: Determine if product is purchasable
+- `register()`: User registration with password hashing
+- `login()`: User authentication with JWT token generation
+- `validateUser()`: JWT token validation and user extraction
 
 ## API Design
 
 ### Endpoints
 
 **Products:**
-- `POST /products` - Create product
+- `POST /products` - Create product (requires authentication)
 - `GET /products/:id` - Get product by ID
-- `PATCH /products/:id` - Update product
-- `DELETE /products/:id` - Delete product
+- `PATCH /products/:id` - Update product (requires authentication + ownership)
+- `DELETE /products/:id` - Delete product (requires authentication + ownership)
 - `GET /products` - List products (with filtering)
 
 **Collections:**
 - `POST /collections` - Create collection
 - `GET /collections/:id` - Get collection by ID
+
+**Authentication:**
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
 - `GET /collections/slug/:slug` - Get collection by slug
 - `PATCH /collections/:id` - Update collection
 - `DELETE /collections/:id` - Delete collection
@@ -193,6 +226,9 @@ All critical operations are wrapped in MongoDB transactions:
 - Product update with variant changes
 - Cascade delete behavior
 - Purchasable flag logic
+- User authentication and JWT token validation
+- Ownership validation for product modification
+- Custom decorator functionality
 
 ### Additional Tests
 - Integration tests for API endpoints
@@ -200,6 +236,30 @@ All critical operations are wrapped in MongoDB transactions:
 - Test transactional operations
 - Test validation rules
 - Test error handling
+- Authentication flow testing
+- Authorization testing with different users
+
+## Authentication & Authorization
+
+### JWT Implementation
+- **Token Generation**: JWT tokens with user ID payload
+- **Token Validation**: Passport JWT strategy with user lookup
+- **Password Security**: bcryptjs hashing with salt rounds
+- **Token Expiration**: 24-hour token lifetime
+
+### Authorization Flow
+1. **User Registration**: Email validation, password hashing, user creation
+2. **User Login**: Credential validation, JWT token generation
+3. **Protected Routes**: JWT guard validation on product modification endpoints
+4. **Ownership Validation**: Users can only modify their own products
+5. **Custom Decorators**: @CurrentUser() for clean user extraction
+
+### Security Features
+- **Password Hashing**: bcryptjs with 10 salt rounds
+- **JWT Security**: Signed tokens with secret key
+- **User Isolation**: Ownership-based access control
+- **Input Validation**: DTO validation for all endpoints
+- **Error Handling**: Secure error messages without sensitive data
 
 ## Database Configuration
 

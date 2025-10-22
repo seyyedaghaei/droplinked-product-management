@@ -33,7 +33,7 @@ export class ProductsService {
     private collectionModel: Model<CollectionDocument>,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<Product> {
+  async create(createProductDto: CreateProductDto, userId: Types.ObjectId): Promise<Product> {
     const session = await this.productModel.db.startSession();
 
     try {
@@ -54,6 +54,7 @@ export class ProductsService {
         // Create product
         const product = new this.productModel({
           ...createProductDto,
+          userId,
           purchasable: false,
         });
 
@@ -121,6 +122,7 @@ export class ProductsService {
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
+    userId: Types.ObjectId,
   ): Promise<Product> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid product ID');
@@ -135,6 +137,11 @@ export class ProductsService {
         const product = await this.productModel.findById(id).session(session);
         if (!product) {
           throw new NotFoundException('Product not found');
+        }
+
+        // Check if user owns this product
+        if (!product.userId.equals(userId)) {
+          throw new BadRequestException('You can only update your own products');
         }
 
         // Validate updated product
@@ -195,7 +202,7 @@ export class ProductsService {
     return this.productModel.findById(id).populate('skus');
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId: Types.ObjectId): Promise<void> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid product ID');
     }
@@ -207,6 +214,11 @@ export class ProductsService {
         const product = await this.productModel.findById(id).session(session);
         if (!product) {
           throw new NotFoundException('Product not found');
+        }
+
+        // Check if user owns this product
+        if (!product.userId.equals(userId)) {
+          throw new BadRequestException('You can only delete your own products');
         }
 
         // Cascade delete SKUs

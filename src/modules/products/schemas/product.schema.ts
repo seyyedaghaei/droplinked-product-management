@@ -29,6 +29,9 @@ export class Product {
   @Prop({ type: Types.ObjectId, ref: 'Collection' })
   collectionId?: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
+
   @Prop({ type: Object })
   shippingModel?: {
     name: string;

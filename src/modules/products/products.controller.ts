@@ -10,6 +10,7 @@ import {
   HttpStatus,
   ValidationPipe,
   UsePipes,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,10 +20,13 @@ import {
   ApiBody,
   ApiConsumes,
   ApiProduces,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Products')
 @Controller('products')
@@ -33,10 +37,12 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create a new product',
     description:
-      'Creates a new product with automatic SKU generation based on variants. Supports both physical and digital products with proper validation rules.',
+      'Creates a new product with automatic SKU generation based on variants. Supports both physical and digital products with proper validation rules. Requires authentication.',
   })
   @ApiBody({
     type: CreateProductDto,
@@ -186,8 +192,8 @@ export class ProductsController {
     },
   })
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  async create(@Body() createProductDto: CreateProductDto, @CurrentUser() user) {
+    return this.productsService.create(createProductDto, user._id);
   }
 
   @Get()
@@ -352,10 +358,12 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update product by ID',
     description:
-      'Updates an existing product. If variants change, SKUs are automatically regenerated within a transaction.',
+      'Updates an existing product. If variants change, SKUs are automatically regenerated within a transaction. Requires authentication.',
   })
   @ApiParam({
     name: 'id',
@@ -467,6 +475,27 @@ export class ProductsController {
     },
   })
   @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Missing or invalid JWT token',
+    schema: {
+      example: {
+        message: 'Unauthorized',
+        statusCode: 401,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden: You can only update your own products',
+    schema: {
+      example: {
+        message: 'You can only update your own products',
+        error: 'Bad Request',
+        statusCode: 400,
+      },
+    },
+  })
+  @ApiResponse({
     status: 409,
     description:
       'Conflict - Duplicate variant combination or business rule violation',
@@ -485,15 +514,18 @@ export class ProductsController {
   async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
+    @CurrentUser() user,
   ) {
-    return this.productsService.update(id, updateProductDto);
+    return this.productsService.update(id, updateProductDto, user._id);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete product by ID',
     description:
-      'Permanently deletes a product and all its associated SKUs. This operation cannot be undone.',
+      'Permanently deletes a product and all its associated SKUs. This operation cannot be undone. Requires authentication.',
   })
   @ApiParam({
     name: 'id',
@@ -529,6 +561,27 @@ export class ProductsController {
     },
   })
   @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Missing or invalid JWT token',
+    schema: {
+      example: {
+        message: 'Unauthorized',
+        statusCode: 401,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden: You can only delete your own products',
+    schema: {
+      example: {
+        message: 'You can only delete your own products',
+        error: 'Bad Request',
+        statusCode: 400,
+      },
+    },
+  })
+  @ApiResponse({
     status: 404,
     description: 'Product not found',
     schema: {
@@ -541,8 +594,8 @@ export class ProductsController {
     },
   })
   @HttpCode(HttpStatus.OK)
-  async remove(@Param('id') id: string) {
-    await this.productsService.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user) {
+    await this.productsService.remove(id, user._id);
     return { message: 'Product deleted successfully' };
   }
 }

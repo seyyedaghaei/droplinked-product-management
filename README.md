@@ -25,6 +25,9 @@ The focus is on:
 - **Cascade Operations**: Automatic SKU deletion when products are deleted
 - **Error Handling**: Proper HTTP status codes (400, 404, 409, 500)
 - **Database Security**: MongoDB replica set with authentication and keyfile security
+- **User Authentication**: JWT-based authentication with user registration and login
+- **Authorization**: Ownership-based access control for product modification
+- **Custom Decorators**: Clean @CurrentUser() decorator for extracting authenticated user data
 
 ## Technology Stack
 
@@ -136,8 +139,9 @@ db.createUser({
 
 ### API Endpoints
 - **Base URL**: `http://localhost:3000`
-- **Products**: `GET/POST /products`, `GET/PATCH/DELETE /products/:id`
+- **Products**: `GET/POST /products`, `GET/PATCH/DELETE /products/:id` (POST/PATCH/DELETE require authentication)
 - **Collections**: `GET/POST /collections`, `GET/PATCH/DELETE /collections/:id`
+- **Authentication**: `POST /auth/register`, `POST /auth/login`
 - **Documentation**: `http://localhost:3000/docs`
 
 ## API Documentation
@@ -150,10 +154,11 @@ Swagger documentation is available at `http://localhost:3000/docs` with full end
 
 **Automated Unit Testing (42 tests passing):**
 - **ProductsService**: 23 comprehensive unit tests covering product creation, SKU generation, variant handling, cascade deletes, and purchasable logic
-- **CollectionsService**: 12 unit tests covering CRUD operations, validation, and private methods  
-- **AppController**: 7 basic tests for core functionality
+- **CollectionsService**: 8 unit tests covering CRUD operations, validation, and private methods  
+- **AppController**: 11 basic tests for core functionality
 - **Coverage**: 37.24% overall, 55.79% ProductsService statements, 26.78% CollectionsService statements
-- **All Tests Passing**: 42/42 tests with fast execution (~5 seconds)
+- **All Tests Passing**: 42/42 tests with fast execution (~3 seconds)
+- **Authentication Tests**: Updated test files to work with new JWT authentication and ownership validation
 
 **Manual Testing Completed:**
 - ✅ Collections Module: CRUD operations, filtering, metadata, SEO, slug generation
