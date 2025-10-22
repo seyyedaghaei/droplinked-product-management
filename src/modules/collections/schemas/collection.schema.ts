@@ -52,7 +52,7 @@ export class Collection {
 export const CollectionSchema = SchemaFactory.createForClass(Collection);
 
 // Create indexes for better performance
-CollectionSchema.index({ name: 1 });
+// Note: name index is already created by unique: true in @Prop
 CollectionSchema.index({ slug: 1 });
 CollectionSchema.index({ isActive: 1 });
 CollectionSchema.index({ 'metadata.category': 1 });
