@@ -11,6 +11,7 @@ import {
   ValidationPipe,
   UsePipes,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,10 +22,13 @@ import {
   ApiConsumes,
   ApiProduces,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 @ApiTags('Collections')
 @Controller('collections')
@@ -35,10 +39,12 @@ export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Create a new collection',
+    summary: 'Create a new collection (Admin only)',
     description:
-      'Creates a new collection with metadata, SEO settings, and display options. Supports automatic slug generation.',
+      'Creates a new collection with metadata, SEO settings, and display options. Supports automatic slug generation. Requires admin role.',
   })
   @ApiBody({
     type: CreateCollectionDto,
@@ -111,6 +117,18 @@ export class CollectionsController {
         statusCode: { type: 'number', example: 400 },
         message: { type: 'array', items: { type: 'string' } },
         error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 403 },
+        message: { type: 'string', example: 'Admin access required' },
+        error: { type: 'string', example: 'Forbidden' },
       },
     },
   })
@@ -400,9 +418,12 @@ export class CollectionsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Update collection by ID',
-    description: 'Updates an existing collection. All fields are optional.',
+    summary: 'Update collection by ID (Admin only)',
+    description:
+      'Updates an existing collection. All fields are optional. Requires admin role.',
   })
   @ApiParam({
     name: 'id',
@@ -537,10 +558,12 @@ export class CollectionsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Delete collection by ID',
+    summary: 'Delete collection by ID (Admin only)',
     description:
-      'Permanently deletes a collection. Cannot delete collections that contain products.',
+      'Permanently deletes a collection. Cannot delete collections that contain products. Requires admin role.',
   })
   @ApiParam({
     name: 'id',

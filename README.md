@@ -140,9 +140,14 @@ db.createUser({
 ### API Endpoints
 - **Base URL**: `http://localhost:3000`
 - **Products**: `GET/POST /products`, `GET/PATCH/DELETE /products/:id`, `PATCH /products/:id/skus` (POST/PATCH/DELETE require authentication)
-- **Collections**: `GET/POST /collections`, `GET/PATCH/DELETE /collections/:id`
+- **Collections**: `GET /collections` (public), `POST/PATCH/DELETE /collections` (admin only)
 - **Authentication**: `POST /auth/register`, `POST /auth/login`
 - **Documentation**: `http://localhost:3000/docs`
+
+### Admin Access
+- **Admin User**: `admin@droplinked.com` / `admin123`
+- **Admin Role**: Required for creating, updating, and deleting collections
+- **Regular Users**: Can only read collections and manage their own products
 
 ## API Documentation
 

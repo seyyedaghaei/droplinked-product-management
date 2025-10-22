@@ -13,10 +13,12 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const user = await this.usersService.register(registerDto);
-    
+
     // Remove password from response
-    const { password, ...userWithoutPassword } = (user as any).toObject ? (user as any).toObject() : user;
-    
+    const { password, ...userWithoutPassword } = (user as any).toObject
+      ? (user as any).toObject()
+      : user;
+
     return {
       user: userWithoutPassword,
       message: 'User registered successfully',
@@ -29,14 +31,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const payload = { 
+    const payload = {
       sub: (user as any)._id,
     };
 
     const accessToken = this.jwtService.sign(payload);
 
     // Remove password from response
-    const { password, ...userWithoutPassword } = (user as any).toObject ? (user as any).toObject() : user;
+    const { password, ...userWithoutPassword } = (user as any).toObject
+      ? (user as any).toObject()
+      : user;
 
     return {
       user: userWithoutPassword,

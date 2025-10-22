@@ -154,10 +154,12 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow(
         'Published products require title, description, and collection',
       );
     });
@@ -177,12 +179,12 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        'Physical products require shipping model',
-      );
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow('Physical products require shipping model');
     });
 
     it('should throw BadRequestException for digital product without file URL', async () => {
@@ -200,12 +202,12 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        'Digital products require file URL',
-      );
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow('Digital products require file URL');
     });
 
     it('should throw NotFoundException for invalid collection', async () => {
@@ -230,12 +232,12 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        'Collection not found',
-      );
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow('Collection not found');
     });
 
     it('should throw BadRequestException for inactive collection', async () => {
@@ -261,12 +263,12 @@ describe('ProductsService', () => {
           return await callback();
         });
 
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.create(createProductDto, mockUserId)).rejects.toThrow(
-        'Collection is not active',
-      );
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create(createProductDto, mockUserId),
+      ).rejects.toThrow('Collection is not active');
     });
   });
 
@@ -608,7 +610,9 @@ describe('ProductsService', () => {
         ],
       };
 
-      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(
+        mockSession,
+      );
       (service['productModel'].findById as jest.Mock)
         .mockReturnValue({
           populate: jest.fn().mockReturnValue({
@@ -667,13 +671,14 @@ describe('ProductsService', () => {
         endSession: jest.fn(),
       };
 
-      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
-      (service['productModel'].findById as jest.Mock)
-        .mockReturnValue({
-          populate: jest.fn().mockReturnValue({
-            session: jest.fn().mockResolvedValue(null),
-          }),
-        });
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(
+        mockSession,
+      );
+      (service['productModel'].findById as jest.Mock).mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          session: jest.fn().mockResolvedValue(null),
+        }),
+      });
 
       await expect(
         service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
@@ -697,13 +702,14 @@ describe('ProductsService', () => {
         userId: differentUserId,
       };
 
-      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
-      (service['productModel'].findById as jest.Mock)
-        .mockReturnValue({
-          populate: jest.fn().mockReturnValue({
-            session: jest.fn().mockResolvedValue(productWithDifferentOwner),
-          }),
-        });
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(
+        mockSession,
+      );
+      (service['productModel'].findById as jest.Mock).mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          session: jest.fn().mockResolvedValue(productWithDifferentOwner),
+        }),
+      });
 
       await expect(
         service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
@@ -726,13 +732,14 @@ describe('ProductsService', () => {
         skus: [],
       };
 
-      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
-      (service['productModel'].findById as jest.Mock)
-        .mockReturnValue({
-          populate: jest.fn().mockReturnValue({
-            session: jest.fn().mockResolvedValue(productWithoutSkus),
-          }),
-        });
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(
+        mockSession,
+      );
+      (service['productModel'].findById as jest.Mock).mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          session: jest.fn().mockResolvedValue(productWithoutSkus),
+        }),
+      });
 
       await expect(
         service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
@@ -760,20 +767,31 @@ describe('ProductsService', () => {
         ],
       };
 
-      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
-      (service['productModel'].findById as jest.Mock)
-        .mockReturnValue({
-          populate: jest.fn().mockReturnValue({
-            session: jest.fn().mockResolvedValue(mockProduct),
-          }),
-        });
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(
+        mockSession,
+      );
+      (service['productModel'].findById as jest.Mock).mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          session: jest.fn().mockResolvedValue(mockProduct),
+        }),
+      });
 
       await expect(
-        service.updateSkus(mockProductId.toString(), invalidUpdateDto, mockUserId),
+        service.updateSkus(
+          mockProductId.toString(),
+          invalidUpdateDto,
+          mockUserId,
+        ),
       ).rejects.toThrow(BadRequestException);
       await expect(
-        service.updateSkus(mockProductId.toString(), invalidUpdateDto, mockUserId),
-      ).rejects.toThrow('SKU with variant combination {"color":"green","size":"XL"} not found in product');
+        service.updateSkus(
+          mockProductId.toString(),
+          invalidUpdateDto,
+          mockUserId,
+        ),
+      ).rejects.toThrow(
+        'SKU with variant combination {"color":"green","size":"XL"} not found in product',
+      );
     });
   });
 });

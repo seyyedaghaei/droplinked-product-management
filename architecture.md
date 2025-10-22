@@ -75,6 +75,7 @@ interface User {
   password: string; // hashed with bcryptjs
   firstName: string;
   lastName: string;
+  role: 'user' | 'admin'; // user role for authorization
   isActive: boolean; // default: true
   products: ObjectId[]; // references to Product documents
   productCount: number; // calculated field
@@ -164,18 +165,18 @@ interface VariantDefinition {
 - `GET /products` - List products (with filtering)
 
 **Collections:**
-- `POST /collections` - Create collection
+- `POST /collections` - Create collection (admin only)
 - `GET /collections/:id` - Get collection by ID
 
 **Authentication:**
 - `POST /auth/register` - User registration
 - `POST /auth/login` - User login
 - `GET /collections/slug/:slug` - Get collection by slug
-- `PATCH /collections/:id` - Update collection
-- `DELETE /collections/:id` - Delete collection
+- `PATCH /collections/:id` - Update collection (admin only)
+- `DELETE /collections/:id` - Delete collection (admin only)
 - `GET /collections` - List collections (with filtering)
-- `POST /collections/:id/products/:productId` - Add product to collection
-- `DELETE /collections/:id/products/:productId` - Remove product from collection
+- `POST /collections/:id/products/:productId` - Add product to collection (admin only)
+- `DELETE /collections/:id/products/:productId` - Remove product from collection (admin only)
 
 ### HTTP Status Codes
 - `200` - Success

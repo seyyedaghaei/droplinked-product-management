@@ -193,7 +193,10 @@ export class ProductsController {
     },
   })
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createProductDto: CreateProductDto, @CurrentUser() user) {
+  async create(
+    @Body() createProductDto: CreateProductDto,
+    @CurrentUser() user,
+  ) {
     return this.productsService.create(createProductDto, user._id);
   }
 
@@ -671,7 +674,11 @@ export class ProductsController {
       type: 'object',
       properties: {
         statusCode: { type: 'number', example: 400 },
-        message: { type: 'string', example: 'SKU with variant combination {"color":"red","size":"L"} not found in product' },
+        message: {
+          type: 'string',
+          example:
+            'SKU with variant combination {"color":"red","size":"L"} not found in product',
+        },
         error: { type: 'string', example: 'Bad Request' },
       },
     },
@@ -692,7 +699,10 @@ export class ProductsController {
       type: 'object',
       properties: {
         statusCode: { type: 'number', example: 403 },
-        message: { type: 'string', example: 'You can only update your own products' },
+        message: {
+          type: 'string',
+          example: 'You can only update your own products',
+        },
         error: { type: 'string', example: 'Forbidden' },
       },
     },
