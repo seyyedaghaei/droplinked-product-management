@@ -139,7 +139,7 @@ db.createUser({
 
 ### API Endpoints
 - **Base URL**: `http://localhost:3000`
-- **Products**: `GET/POST /products`, `GET/PATCH/DELETE /products/:id` (POST/PATCH/DELETE require authentication)
+- **Products**: `GET/POST /products`, `GET/PATCH/DELETE /products/:id`, `PATCH /products/:id/skus` (POST/PATCH/DELETE require authentication)
 - **Collections**: `GET/POST /collections`, `GET/PATCH/DELETE /collections/:id`
 - **Authentication**: `POST /auth/register`, `POST /auth/login`
 - **Documentation**: `http://localhost:3000/docs`
@@ -152,12 +152,12 @@ Swagger documentation is available at `http://localhost:3000/docs` with full end
 
 ### ✅ **Comprehensive Testing Completed**
 
-**Automated Unit Testing (42 tests passing):**
-- **ProductsService**: 23 comprehensive unit tests covering product creation, SKU generation, variant handling, cascade deletes, and purchasable logic
+**Automated Unit Testing (48 tests passing):**
+- **ProductsService**: 29 comprehensive unit tests covering product creation, SKU generation, variant handling, cascade deletes, purchasable logic, and SKU updates
 - **CollectionsService**: 8 unit tests covering CRUD operations, validation, and private methods  
 - **AppController**: 11 basic tests for core functionality
 - **Coverage**: 37.24% overall, 55.79% ProductsService statements, 26.78% CollectionsService statements
-- **All Tests Passing**: 42/42 tests with fast execution (~3 seconds)
+- **All Tests Passing**: 48/48 tests with fast execution (~3 seconds)
 - **Authentication Tests**: Updated test files to work with new JWT authentication and ownership validation
 
 **Manual Testing Completed:**

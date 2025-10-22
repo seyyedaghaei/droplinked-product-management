@@ -14,6 +14,7 @@ import {
 } from '../collections/schemas/collection.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateSkusDto } from './dto/update-sku.dto';
 import { ProductType, ProductStatus } from './enums/product.enum';
 import {
   ProductForValidation,
@@ -33,7 +34,10 @@ export class ProductsService {
     private collectionModel: Model<CollectionDocument>,
   ) {}
 
-  async create(createProductDto: CreateProductDto, userId: Types.ObjectId): Promise<Product> {
+  async create(
+    createProductDto: CreateProductDto,
+    userId: Types.ObjectId,
+  ): Promise<Product> {
     const session = await this.productModel.db.startSession();
 
     try {
@@ -141,7 +145,9 @@ export class ProductsService {
 
         // Check if user owns this product
         if (!product.userId.equals(userId)) {
-          throw new BadRequestException('You can only update your own products');
+          throw new BadRequestException(
+            'You can only update your own products',
+          );
         }
 
         // Validate updated product
@@ -218,7 +224,9 @@ export class ProductsService {
 
         // Check if user owns this product
         if (!product.userId.equals(userId)) {
-          throw new BadRequestException('You can only delete your own products');
+          throw new BadRequestException(
+            'You can only delete your own products',
+          );
         }
 
         // Cascade delete SKUs
@@ -287,7 +295,25 @@ export class ProductsService {
     if (!oldVariants || !newVariants) return true;
     if (oldVariants.length !== newVariants.length) return true;
 
-    return JSON.stringify(oldVariants) !== JSON.stringify(newVariants);
+    // Sort variants by name for consistent comparison
+    const sortedOld = [...oldVariants].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    const sortedNew = [...newVariants].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+
+    // Sort values within each variant for consistent comparison
+    const normalizedOld = sortedOld.map((variant) => ({
+      ...variant,
+      values: [...variant.values].sort(),
+    }));
+    const normalizedNew = sortedNew.map((variant) => ({
+      ...variant,
+      values: [...variant.values].sort(),
+    }));
+
+    return JSON.stringify(normalizedOld) !== JSON.stringify(normalizedNew);
   }
 
   private async generateSkus(
@@ -319,6 +345,94 @@ export class ProductsService {
     }));
 
     return this.skuModel.insertMany(skus, { session });
+  }
+
+  async updateSkus(
+    productId: string,
+    updateSkusDto: UpdateSkusDto,
+    userId: Types.ObjectId,
+  ): Promise<Product> {
+    const session = await this.productModel.db.startSession();
+
+    try {
+      let updatedProduct: ProductDocument;
+
+      await session.withTransaction(async () => {
+        // Validate product ID
+        if (!Types.ObjectId.isValid(productId)) {
+          throw new BadRequestException('Invalid product ID');
+        }
+
+        // Find the product and verify ownership
+        const product = await this.productModel
+          .findById(productId)
+          .populate('skus')
+          .session(session);
+
+        if (!product) {
+          throw new NotFoundException('Product not found');
+        }
+
+        // Check ownership
+        if (!product.userId.equals(userId)) {
+          throw new BadRequestException(
+            'You can only update your own products',
+          );
+        }
+
+        // Get current SKUs (they should be populated from the query above)
+        if (!product.skus || product.skus.length === 0) {
+          throw new BadRequestException('Product has no SKUs to update');
+        }
+
+        // Cast to SkuDocument array since we populated them in the query
+        const currentSkus = product.skus as unknown as SkuDocument[];
+
+        // Create a map of current SKUs by their variant combination
+        const currentSkuMap = new Map<string, SkuDocument>();
+        currentSkus.forEach((sku) => {
+          const variantKey = JSON.stringify(sku.variantCombination);
+          currentSkuMap.set(variantKey, sku);
+        });
+
+        // Process each SKU update
+        for (const skuUpdate of updateSkusDto.skus) {
+          const variantKey = JSON.stringify(skuUpdate.variantCombination);
+          const existingSku = currentSkuMap.get(variantKey);
+
+          if (!existingSku) {
+            throw new BadRequestException(
+              `SKU with variant combination ${variantKey} not found in product`,
+            );
+          }
+
+          // Update the SKU with new values
+          const updateData: any = {};
+          if (skuUpdate.price !== undefined) {
+            updateData.price = skuUpdate.price;
+          }
+          if (skuUpdate.quantity !== undefined) {
+            updateData.quantity = skuUpdate.quantity;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await this.skuModel
+              .findByIdAndUpdate(existingSku._id, updateData, { session })
+              .exec();
+          }
+        }
+
+        // Refresh the product with updated SKUs
+        updatedProduct = await this.productModel
+          .findById(productId)
+          .populate('skus')
+          .session(session);
+      });
+
+      return updatedProduct;
+    } finally {
+      await session.endSession();
+    }
   }
 
   private generateVariantCombinations(

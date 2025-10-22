@@ -35,7 +35,7 @@
 
 ## 📊 **Comprehensive Test Coverage**
 
-### **ProductsService Tests (23 tests)**
+### **ProductsService Tests (29 tests)**
 ```typescript
 ✅ Product Creation Validation
   - Draft products (minimal validation)
@@ -70,9 +70,16 @@
   - hasVariantsChanged()
   - generateVariantCombinations()
   - Edge cases and boundary conditions
+
+✅ SKU Update Functionality
+  - Update SKU price and quantity
+  - Variant combination validation
+  - Ownership verification
+  - Error handling for invalid variants
+  - Transaction safety
 ```
 
-### **CollectionsService Tests (12 tests)**
+### **CollectionsService Tests (8 tests)**
 ```typescript
 ✅ Basic CRUD Operations
   - findAll(), findActive(), findFeatured()
@@ -182,7 +189,7 @@ yarn turbo run test --filter=@platejs/ptml -- src/lib/__test__/deserializeAttrib
 ## 🎯 **Success Criteria Met**
 
 ### ✅ **All Tests Passing**
-- 42/42 tests passing
+- 48/48 tests passing
 - No flaky tests
 - Fast execution (< 6 seconds)
 - Clear test names and structure

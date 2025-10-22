@@ -108,6 +108,7 @@ describe('ProductsService', () => {
           useValue: {
             insertMany: jest.fn(),
             deleteMany: jest.fn(),
+            findByIdAndUpdate: jest.fn(),
           },
         },
         {
@@ -448,6 +449,21 @@ describe('ProductsService', () => {
         expect(result).toBe(false);
       });
 
+      it('should return false when variants are reordered but same', () => {
+        const oldVariants = [
+          { name: 'color', values: ['red', 'blue'] },
+          { name: 'size', values: ['S', 'M'] },
+        ];
+        const newVariants = [
+          { name: 'size', values: ['M', 'S'] }, // Different order
+          { name: 'color', values: ['blue', 'red'] }, // Different order
+        ];
+
+        const result = service['hasVariantsChanged'](oldVariants, newVariants);
+
+        expect(result).toBe(false);
+      });
+
       it('should return true when variants are different', () => {
         const oldVariants = [
           { name: 'color', values: ['red', 'blue'] },
@@ -520,6 +536,244 @@ describe('ProductsService', () => {
 
         expect(result).toEqual([{}]);
       });
+    });
+  });
+
+  describe('updateSkus', () => {
+    const mockUserId = new Types.ObjectId();
+    const mockProductId = new Types.ObjectId();
+    const mockSkuId1 = new Types.ObjectId();
+    const mockSkuId2 = new Types.ObjectId();
+
+    const mockProduct = {
+      _id: mockProductId,
+      userId: mockUserId,
+      title: 'Test Product',
+      skus: [
+        {
+          _id: mockSkuId1,
+          variantCombination: { color: 'red', size: 'S' },
+          price: 0,
+          quantity: 0,
+        },
+        {
+          _id: mockSkuId2,
+          variantCombination: { color: 'blue', size: 'M' },
+          price: 0,
+          quantity: 0,
+        },
+      ],
+    };
+
+    const updateSkusDto = {
+      skus: [
+        {
+          variantCombination: { color: 'red', size: 'S' },
+          price: 29.99,
+          quantity: 100,
+        },
+        {
+          variantCombination: { color: 'blue', size: 'M' },
+          price: 31.99,
+          quantity: 50,
+        },
+      ],
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should update SKUs successfully', async () => {
+      const mockSession = {
+        withTransaction: jest.fn().mockImplementation(async (callback) => {
+          return await callback();
+        }),
+        endSession: jest.fn(),
+      };
+
+      const mockUpdatedProduct = {
+        ...mockProduct,
+        skus: [
+          {
+            ...mockProduct.skus[0],
+            price: 29.99,
+            quantity: 100,
+          },
+          {
+            ...mockProduct.skus[1],
+            price: 31.99,
+            quantity: 50,
+          },
+        ],
+      };
+
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
+      (service['productModel'].findById as jest.Mock)
+        .mockReturnValue({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(mockProduct),
+          }),
+        })
+        .mockReturnValueOnce({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(mockProduct),
+          }),
+        })
+        .mockReturnValueOnce({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(mockUpdatedProduct),
+          }),
+        });
+
+      (service['skuModel'].findByIdAndUpdate as jest.Mock).mockReturnValue({
+        exec: jest.fn().mockResolvedValue({}),
+      });
+
+      const result = await service.updateSkus(
+        mockProductId.toString(),
+        updateSkusDto,
+        mockUserId,
+      );
+
+      expect(result).toEqual(mockUpdatedProduct);
+      expect(service['skuModel'].findByIdAndUpdate).toHaveBeenCalledTimes(2);
+      expect(service['skuModel'].findByIdAndUpdate).toHaveBeenCalledWith(
+        mockSkuId1,
+        { price: 29.99, quantity: 100 },
+        { session: mockSession },
+      );
+      expect(service['skuModel'].findByIdAndUpdate).toHaveBeenCalledWith(
+        mockSkuId2,
+        { price: 31.99, quantity: 50 },
+        { session: mockSession },
+      );
+    });
+
+    it('should throw BadRequestException for invalid product ID', async () => {
+      await expect(
+        service.updateSkus('invalid-id', updateSkusDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateSkus('invalid-id', updateSkusDto, mockUserId),
+      ).rejects.toThrow('Invalid product ID');
+    });
+
+    it('should throw NotFoundException when product not found', async () => {
+      const mockSession = {
+        withTransaction: jest.fn().mockImplementation(async (callback) => {
+          return await callback();
+        }),
+        endSession: jest.fn(),
+      };
+
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
+      (service['productModel'].findById as jest.Mock)
+        .mockReturnValue({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(null),
+          }),
+        });
+
+      await expect(
+        service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
+      ).rejects.toThrow('Product not found');
+    });
+
+    it('should throw BadRequestException when user is not the owner', async () => {
+      const mockSession = {
+        withTransaction: jest.fn().mockImplementation(async (callback) => {
+          return await callback();
+        }),
+        endSession: jest.fn(),
+      };
+
+      const differentUserId = new Types.ObjectId();
+      const productWithDifferentOwner = {
+        ...mockProduct,
+        userId: differentUserId,
+      };
+
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
+      (service['productModel'].findById as jest.Mock)
+        .mockReturnValue({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(productWithDifferentOwner),
+          }),
+        });
+
+      await expect(
+        service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
+      ).rejects.toThrow('You can only update your own products');
+    });
+
+    it('should throw BadRequestException when product has no SKUs', async () => {
+      const mockSession = {
+        withTransaction: jest.fn().mockImplementation(async (callback) => {
+          return await callback();
+        }),
+        endSession: jest.fn(),
+      };
+
+      const productWithoutSkus = {
+        ...mockProduct,
+        skus: [],
+      };
+
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
+      (service['productModel'].findById as jest.Mock)
+        .mockReturnValue({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(productWithoutSkus),
+          }),
+        });
+
+      await expect(
+        service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateSkus(mockProductId.toString(), updateSkusDto, mockUserId),
+      ).rejects.toThrow('Product has no SKUs to update');
+    });
+
+    it('should throw BadRequestException when SKU variant combination not found', async () => {
+      const mockSession = {
+        withTransaction: jest.fn().mockImplementation(async (callback) => {
+          return await callback();
+        }),
+        endSession: jest.fn(),
+      };
+
+      const invalidUpdateDto = {
+        skus: [
+          {
+            variantCombination: { color: 'green', size: 'XL' },
+            price: 99.99,
+            quantity: 10,
+          },
+        ],
+      };
+
+      (service['productModel'].db.startSession as jest.Mock).mockResolvedValue(mockSession);
+      (service['productModel'].findById as jest.Mock)
+        .mockReturnValue({
+          populate: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(mockProduct),
+          }),
+        });
+
+      await expect(
+        service.updateSkus(mockProductId.toString(), invalidUpdateDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateSkus(mockProductId.toString(), invalidUpdateDto, mockUserId),
+      ).rejects.toThrow('SKU with variant combination {"color":"green","size":"XL"} not found in product');
     });
   });
 });

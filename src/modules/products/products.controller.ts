@@ -25,6 +25,7 @@ import {
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateSkusDto } from './dto/update-sku.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -597,5 +598,123 @@ export class ProductsController {
   async remove(@Param('id') id: string, @CurrentUser() user) {
     await this.productsService.remove(id, user._id);
     return { message: 'Product deleted successfully' };
+  }
+
+  @Patch(':id/skus')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update product SKUs',
+    description:
+      'Updates quantity and price for specific SKUs of a product. Only the owner can update their product SKUs.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'MongoDB ObjectId of the product',
+    example: '507f1f77bcf86cd799439011',
+    type: 'string',
+  })
+  @ApiBody({
+    type: UpdateSkusDto,
+    description: 'SKU updates with new prices and quantities',
+    examples: {
+      example1: {
+        summary: 'Update multiple SKUs',
+        value: {
+          skus: [
+            {
+              variantCombination: { color: 'red', size: 'L' },
+              price: 29.99,
+              quantity: 100,
+            },
+            {
+              variantCombination: { color: 'blue', size: 'M' },
+              price: 31.99,
+              quantity: 50,
+            },
+          ],
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'SKUs updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        title: { type: 'string', example: 'Premium Cotton T-Shirt' },
+        skus: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string', example: '507f1f77bcf86cd799439012' },
+              sku: { type: 'string', example: 'PROD-001-RED-L' },
+              price: { type: 'number', example: 29.99 },
+              quantity: { type: 'number', example: 100 },
+              variantCombination: {
+                type: 'object',
+                example: { color: 'red', size: 'L' },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid product ID or SKU not found',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: 'SKU with variant combination {"color":"red","size":"L"} not found in product' },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Missing or invalid JWT token',
+    schema: {
+      example: {
+        message: 'Unauthorized',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden: You can only update your own products',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 403 },
+        message: { type: 'string', example: 'You can only update your own products' },
+        error: { type: 'string', example: 'Forbidden' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Product not found',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: 'Product not found' },
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
+  })
+  @HttpCode(HttpStatus.OK)
+  async updateSkus(
+    @Param('id') id: string,
+    @Body() updateSkusDto: UpdateSkusDto,
+    @CurrentUser() user,
+  ) {
+    return this.productsService.updateSkus(id, updateSkusDto, user._id);
   }
 }

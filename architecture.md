@@ -160,6 +160,7 @@ interface VariantDefinition {
 - `GET /products/:id` - Get product by ID
 - `PATCH /products/:id` - Update product (requires authentication + ownership)
 - `DELETE /products/:id` - Delete product (requires authentication + ownership)
+- `PATCH /products/:id/skus` - Update product SKUs (requires authentication + ownership)
 - `GET /products` - List products (with filtering)
 
 **Collections:**
