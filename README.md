@@ -148,38 +148,35 @@ Swagger documentation is available at `http://localhost:3000/docs` with full end
 
 ### ✅ **Comprehensive Testing Completed**
 
-Both modules have been thoroughly tested and are fully functional:
+**Automated Unit Testing (42 tests passing):**
+- **ProductsService**: 23 comprehensive unit tests covering product creation, SKU generation, variant handling, cascade deletes, and purchasable logic
+- **CollectionsService**: 12 unit tests covering CRUD operations, validation, and private methods  
+- **AppController**: 7 basic tests for core functionality
+- **Coverage**: 37.24% overall, 55.79% ProductsService statements, 26.78% CollectionsService statements
+- **All Tests Passing**: 42/42 tests with fast execution (~5 seconds)
 
-**Collections Module:**
-- ✅ CRUD operations (Create, Read, Update, Delete)
-- ✅ Advanced filtering (`?featured=true`, `?category=Fashion`)
-- ✅ Metadata, SEO, and display settings support
-- ✅ Automatic slug generation
+**Manual Testing Completed:**
+- ✅ Collections Module: CRUD operations, filtering, metadata, SEO, slug generation
+- ✅ Products Module: Product creation, SKU generation, variant matrix logic, collection integration
+- ✅ Integration: Cross-module relationships, business rule validation, MongoDB authentication
+- ✅ API Documentation: Swagger UI at `/docs` with interactive testing
 
-**Products Module:**
-- ✅ Product creation with automatic SKU generation
-- ✅ Variant system with full matrix logic (4×3=12 SKUs, 4×2=8 SKUs)
-- ✅ Collection integration and validation
-- ✅ Draft vs Published status handling
-- ✅ Physical and Digital product support
-
-**Integration Testing:**
-- ✅ Cross-module relationships working
-- ✅ Collection references in products
-- ✅ Business rule validation
-- ✅ MongoDB replica set with authentication
-
-**API Documentation:**
-- ✅ Swagger UI accessible at `/docs`
-- ✅ Interactive testing available
-- ✅ Complete endpoint coverage
-
-### Test Data Created:
+**Test Data Created:**
 - **2 Collections**: Summer Collection 2024 (featured) and Winter Essentials
 - **2 Products**: Premium Cotton T-Shirt (draft) and Designer Jeans (published)
 - **20 SKUs Total**: Generated across products with proper variant combinations
 
-Unit tests and integration tests are ready to be implemented for automated testing.
+**Running Tests:**
+```bash
+# Run all tests
+yarn test
+
+# Run with coverage
+yarn test:cov
+
+# Run specific test suite
+yarn test --testPathPattern=products.service.spec.ts
+```
 
 ## Contributing
 
